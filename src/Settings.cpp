@@ -23,9 +23,9 @@ namespace
 
 	void LogSettings(const char* a_prefix)
 	{
-		logs::info("{}: disablePlayerThirdPerson={} disablePlayerFirstPerson={} disablePlayerBow={} disableNPC={}", a_prefix,
-			Settings::disablePlayerThirdPerson.load(), Settings::disablePlayerFirstPerson.load(), Settings::disablePlayerBow.load(),
-			Settings::disableNPC.load());
+		logs::info("{}: disablePlayerThirdPerson={} disablePlayerFirstPerson={} disableNPC={} disableMagicKillCam={} disableBowKillCam={}",
+			a_prefix, Settings::disablePlayerThirdPerson.load(), Settings::disablePlayerFirstPerson.load(), Settings::disableNPC.load(),
+			Settings::disableMagicKillCam.load(), Settings::disableBowKillCam.load());
 	}
 }
 
@@ -58,10 +58,12 @@ void Settings::Load()
 			disablePlayerThirdPerson = ParseBool(value);
 		} else if (key == "bDisablePlayerFirstPerson") {
 			disablePlayerFirstPerson = ParseBool(value);
-		} else if (key == "bDisablePlayerBow") {
-			disablePlayerBow = ParseBool(value);
 		} else if (key == "bDisableNPC") {
 			disableNPC = ParseBool(value);
+		} else if (key == "bDisableMagicKillCam") {
+			disableMagicKillCam = ParseBool(value);
+		} else if (key == "bDisableBowKillCam") {
+			disableBowKillCam = ParseBool(value);
 		}
 	}
 	LogSettings("Settings loaded");
@@ -79,17 +81,19 @@ void Settings::Save()
 		out << "; NoKillmoves - settings\n"
 			   "; Also editable in game: Mod Control Panel (SKSE Menu Framework) > NoKillmoves.\n"
 			   "; The in-game menu rewrites this file whenever you change a setting.\n"
-			   "; true = that kind of kill move is switched off.\n"
+			   "; true = switched off.\n"
 			   "\n"
 			   "[General]\n"
 			   "; Your kill moves while in third person. Sneak kills (throat slit) always stay on.\n"
 			<< "bDisablePlayerThirdPerson = " << Bool(disablePlayerThirdPerson) << "\n"
 			<< "; Your kill moves while in first person. Sneak kills (throat slit) always stay on.\n"
 			<< "bDisablePlayerFirstPerson = " << Bool(disablePlayerFirstPerson) << "\n"
-			<< "; Your kill moves with a bow or crossbow in hand, in either camera.\n"
-			<< "bDisablePlayerBow = " << Bool(disablePlayerBow) << "\n"
 			<< "; Kill moves by NPCs, creatures and dragons - on you and on each other.\n"
-			<< "bDisableNPC = " << Bool(disableNPC) << "\n";
+			<< "bDisableNPC = " << Bool(disableNPC) << "\n"
+			<< "; The slow-motion kill cam when your spell kills the last enemy.\n"
+			<< "bDisableMagicKillCam = " << Bool(disableMagicKillCam) << "\n"
+			<< "; The slow-motion kill cam that follows your arrow or bolt.\n"
+			<< "bDisableBowKillCam = " << Bool(disableBowKillCam) << "\n";
 		if (!out) {
 			logs::error("Write to {} failed", kPath.string());
 			return;

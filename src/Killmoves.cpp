@@ -5,20 +5,10 @@ namespace
 {
 	RE::SCRIPT_FUNCTION::Condition_t* g_original{ nullptr };
 
-	RE::TESObjectWEAP* AsWeapon(RE::TESForm* a_form)
-	{
-		return a_form ? a_form->As<RE::TESObjectWEAP>() : nullptr;
-	}
-
-	bool IsBowOrCrossbow(RE::TESForm* a_form)
-	{
-		const auto weapon = AsWeapon(a_form);
-		return weapon && (weapon->IsBow() || weapon->IsCrossbow());
-	}
-
 	bool IsSneakKillSetup(RE::PlayerCharacter* a_player)
 	{
-		const auto weapon = AsWeapon(a_player->GetEquippedObject(false));
+		const auto equipped = a_player->GetEquippedObject(false);
+		const auto weapon = equipped ? equipped->As<RE::TESObjectWEAP>() : nullptr;
 		return a_player->IsSneaking() && weapon && (weapon->IsOneHandedDagger() || weapon->IsOneHandedSword());
 	}
 
@@ -34,9 +24,6 @@ namespace
 		const auto player = RE::PlayerCharacter::GetSingleton();
 		if (IsSneakKillSetup(player)) {
 			return true;
-		}
-		if (IsBowOrCrossbow(player->GetEquippedObject(false)) || IsBowOrCrossbow(player->GetEquippedObject(true))) {
-			return !Settings::disablePlayerBow;
 		}
 
 		const auto camera = RE::PlayerCamera::GetSingleton();

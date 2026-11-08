@@ -1,5 +1,6 @@
 includes("lib/commonlibsse-ng")
 
+
 set_project("NoKillmoves")
 set_version("1.0.0")
 set_license("GPL-3.0")
@@ -13,7 +14,7 @@ target("NoKillmoves")
     add_rules("commonlibsse-ng.plugin", {
         name = "NoKillmoves",
         author = "Rain",
-        description = "Switch kill moves off for the player (first person, third person, bow) and for NPCs"
+        description = "Switch kill moves off for the player and NPCs, and magic / bow kill cams"
     })
 
     add_installfiles("dist/NoKillmoves.ini", { prefixdir = "SKSE/Plugins" })

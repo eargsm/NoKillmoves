@@ -1,4 +1,5 @@
 #include "UI.h"
+#include "KillCams.h"
 #include "Killmoves.h"
 #include "Settings.h"
 
@@ -15,14 +16,16 @@ namespace
 		}
 	}
 
-	void SettingCheckbox(const char* a_label, std::atomic<bool>& a_value, const char* a_help)
+	bool SettingCheckbox(const char* a_label, std::atomic<bool>& a_value, const char* a_help)
 	{
-		bool v = a_value.load();
-		if (ImGuiMCP::Checkbox(a_label, &v)) {
+		bool       v = a_value.load();
+		const bool changed = ImGuiMCP::Checkbox(a_label, &v);
+		if (changed) {
 			a_value = v;
 			Settings::Save();
 		}
 		HelpMarker(a_help);
+		return changed;
 	}
 
 	void __stdcall RenderSettings()
@@ -33,15 +36,23 @@ namespace
 			"Your kill moves while the camera is in third person.\nSneak kills (throat slit) always stay on.");
 		SettingCheckbox("Disable player kill moves - first person", Settings::disablePlayerFirstPerson,
 			"Your kill moves while the camera is in first person.\nSneak kills (throat slit) always stay on.");
-		SettingCheckbox("Disable player bow kill moves", Settings::disablePlayerBow,
-			"Your kill moves with a bow or crossbow in hand, in either camera.\nThe two switches above do not cover these.");
 		SettingCheckbox("Disable NPC kill moves", Settings::disableNPC,
 			"Kill moves by NPCs, creatures and dragons - on you and on each other.");
 
-		if (!Killmoves::IsInstalled()) {
+		ImGuiMCP::Spacing();
+		const bool magicChanged = SettingCheckbox("Disable magic kill cam", Settings::disableMagicKillCam,
+			"The slow-motion kill cam when your spell kills the last enemy.");
+		const bool bowChanged = SettingCheckbox("Disable bow kill cam", Settings::disableBowKillCam,
+			"The slow-motion kill cam that follows your arrow or bolt.");
+
+		if (magicChanged || bowChanged) {
+			KillCams::Update();
+		}
+
+		if (!Killmoves::IsInstalled() || !KillCams::IsInstalled()) {
 			ImGuiMCP::Spacing();
 			ImGuiMCP::TextColored({ 1.0f, 0.4f, 0.4f, 1.0f },
-				"Could not hook the kill move check - these switches do nothing. See NoKillmoves.log.");
+				"Some switches could not hook into the game and do nothing. See NoKillmoves.log.");
 		}
 	}
 }
