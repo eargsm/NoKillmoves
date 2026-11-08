@@ -10,6 +10,7 @@
 #include <format>
 #include <fstream>
 #include <mutex>
+#include <optional>
 #include <string>
 
 namespace logs = SKSE::log;

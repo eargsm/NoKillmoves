@@ -44,25 +44,22 @@ namespace
 		return weapon->IsStaff() ? Source::kMagic : Source::kOther;
 	}
 
-	Source FromAction(const SKSE::ActionEvent& a_event)
-	{
-		switch (a_event.type.get()) {
-		case SKSE::ActionEvent::Type::kSpellCast:
-		case SKSE::ActionEvent::Type::kSpellFire:
-			return Source::kMagic;
-		case SKSE::ActionEvent::Type::kBowDraw:
-		case SKSE::ActionEvent::Type::kBowRelease:
-			return Source::kBow;
-		default:
-			return FromForm(a_event.sourceForm);
-		}
-	}
-
-	bool IsAttack(SKSE::ActionEvent::Type a_type)
+	std::optional<Source> AttackSource(const SKSE::ActionEvent& a_event)
 	{
 		using Type = SKSE::ActionEvent::Type;
-		return a_type == Type::kWeaponSwing || a_type == Type::kSpellCast || a_type == Type::kSpellFire || a_type == Type::kVoiceFire ||
-		       a_type == Type::kBowDraw || a_type == Type::kBowRelease;
+		switch (a_event.type.get()) {
+		case Type::kSpellCast:
+		case Type::kSpellFire:
+			return Source::kMagic;
+		case Type::kBowDraw:
+		case Type::kBowRelease:
+			return Source::kBow;
+		case Type::kWeaponSwing:
+		case Type::kVoiceFire:
+			return FromForm(a_event.sourceForm);
+		default:
+			return std::nullopt;
+		}
 	}
 
 	class ActionSink : public RE::BSTEventSink<SKSE::ActionEvent>
@@ -76,11 +73,11 @@ namespace
 
 		RE::BSEventNotifyControl ProcessEvent(const SKSE::ActionEvent* a_event, RE::BSTEventSource<SKSE::ActionEvent>*) override
 		{
-			if (a_event && a_event->actor && a_event->actor->IsPlayerRef() && IsAttack(a_event->type.get())) {
-				const auto source = FromAction(*a_event);
-				if (g_lastAttack.exchange(source) != source) {
-					KillCams::Update();
-				}
+			if (!a_event || !a_event->actor || !a_event->actor->IsPlayerRef()) {
+				return RE::BSEventNotifyControl::kContinue;
+			}
+			if (const auto source = AttackSource(*a_event); source && g_lastAttack.exchange(*source) != *source) {
+				KillCams::Update();
 			}
 			return RE::BSEventNotifyControl::kContinue;
 		}
