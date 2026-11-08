@@ -14,6 +14,18 @@ namespace
 	bool                g_iniValue{ false };
 	std::atomic<Source> g_lastAttack{ Source::kOther };
 
+	const char* Name(Source a_source)
+	{
+		switch (a_source) {
+		case Source::kMagic:
+			return "magic";
+		case Source::kBow:
+			return "bow";
+		default:
+			return "other";
+		}
+	}
+
 	Source FromForm(RE::TESForm* a_form)
 	{
 		if (!a_form) {
@@ -119,7 +131,6 @@ void KillCams::Update()
 	                 (attack == Source::kBow && Settings::disableBowKillCam);
 	if (g_vatsDisable->data.b != off) {
 		g_vatsDisable->data.b = off;
-		logs::info("Kill cams {} (last attack: {})", off ? "off" : "on",
-			attack == Source::kMagic ? "magic" : attack == Source::kBow ? "bow" : "other");
+		logs::info("Kill cams {} (last attack: {})", off ? "off" : "on", Name(attack));
 	}
 }

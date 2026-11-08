@@ -46,7 +46,7 @@ namespace
 			"The slow-motion kill cam that follows your arrow or bolt.");
 
 		if (magicChanged || bowChanged) {
-			KillCams::Update();
+			SKSE::GetTaskInterface()->AddTask(KillCams::Update);
 		}
 
 		if (!Killmoves::IsInstalled() || !KillCams::IsInstalled()) {

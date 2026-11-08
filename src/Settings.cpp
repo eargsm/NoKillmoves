@@ -2,6 +2,23 @@
 
 namespace
 {
+	struct Entry
+	{
+		const char*        key;
+		std::atomic<bool>& value;
+		const char*        help;
+	};
+
+	const std::array<Entry, 5> kEntries{ {
+		{ "bDisablePlayerThirdPerson", Settings::disablePlayerThirdPerson,
+			"Your kill moves while in third person. Sneak kills (throat slit) always stay on." },
+		{ "bDisablePlayerFirstPerson", Settings::disablePlayerFirstPerson,
+			"Your kill moves while in first person. Sneak kills (throat slit) always stay on." },
+		{ "bDisableNPC", Settings::disableNPC, "Kill moves by NPCs, creatures and dragons - on you and on each other." },
+		{ "bDisableMagicKillCam", Settings::disableMagicKillCam, "The slow-motion kill cam when your spell kills the last enemy." },
+		{ "bDisableBowKillCam", Settings::disableBowKillCam, "The slow-motion kill cam that follows your arrow or bolt." },
+	} };
+
 	const std::filesystem::path kPath{ "Data/SKSE/Plugins/NoKillmoves.ini" };
 	std::mutex                  g_fileLock;
 
@@ -23,9 +40,11 @@ namespace
 
 	void LogSettings(const char* a_prefix)
 	{
-		logs::info("{}: disablePlayerThirdPerson={} disablePlayerFirstPerson={} disableNPC={} disableMagicKillCam={} disableBowKillCam={}",
-			a_prefix, Settings::disablePlayerThirdPerson.load(), Settings::disablePlayerFirstPerson.load(), Settings::disableNPC.load(),
-			Settings::disableMagicKillCam.load(), Settings::disableBowKillCam.load());
+		std::string values;
+		for (const auto& entry : kEntries) {
+			values += std::format(" {}={}", entry.key, Bool(entry.value));
+		}
+		logs::info("{}:{}", a_prefix, values);
 	}
 }
 
@@ -41,11 +60,8 @@ void Settings::Load()
 	std::string line;
 	while (std::getline(file, line)) {
 		line = Trim(line);
-		if (line.empty() || line[0] == ';' || line[0] == '#' || line[0] == '[') {
-			continue;
-		}
 		const auto eq = line.find('=');
-		if (eq == std::string::npos) {
+		if (line.empty() || line[0] == ';' || line[0] == '#' || line[0] == '[' || eq == std::string::npos) {
 			continue;
 		}
 		const auto key = Trim(line.substr(0, eq));
@@ -54,16 +70,9 @@ void Settings::Load()
 			value = Trim(value.substr(0, comment));
 		}
 
-		if (key == "bDisablePlayerThirdPerson") {
-			disablePlayerThirdPerson = ParseBool(value);
-		} else if (key == "bDisablePlayerFirstPerson") {
-			disablePlayerFirstPerson = ParseBool(value);
-		} else if (key == "bDisableNPC") {
-			disableNPC = ParseBool(value);
-		} else if (key == "bDisableMagicKillCam") {
-			disableMagicKillCam = ParseBool(value);
-		} else if (key == "bDisableBowKillCam") {
-			disableBowKillCam = ParseBool(value);
+		const auto entry = std::ranges::find(kEntries, key, &Entry::key);
+		if (entry != kEntries.end()) {
+			entry->value = ParseBool(value);
 		}
 	}
 	LogSettings("Settings loaded");
@@ -83,17 +92,10 @@ void Settings::Save()
 			   "; The in-game menu rewrites this file whenever you change a setting.\n"
 			   "; true = switched off.\n"
 			   "\n"
-			   "[General]\n"
-			   "; Your kill moves while in third person. Sneak kills (throat slit) always stay on.\n"
-			<< "bDisablePlayerThirdPerson = " << Bool(disablePlayerThirdPerson) << "\n"
-			<< "; Your kill moves while in first person. Sneak kills (throat slit) always stay on.\n"
-			<< "bDisablePlayerFirstPerson = " << Bool(disablePlayerFirstPerson) << "\n"
-			<< "; Kill moves by NPCs, creatures and dragons - on you and on each other.\n"
-			<< "bDisableNPC = " << Bool(disableNPC) << "\n"
-			<< "; The slow-motion kill cam when your spell kills the last enemy.\n"
-			<< "bDisableMagicKillCam = " << Bool(disableMagicKillCam) << "\n"
-			<< "; The slow-motion kill cam that follows your arrow or bolt.\n"
-			<< "bDisableBowKillCam = " << Bool(disableBowKillCam) << "\n";
+			   "[General]\n";
+		for (const auto& entry : kEntries) {
+			out << "; " << entry.help << "\n" << entry.key << " = " << Bool(entry.value) << "\n";
+		}
 		if (!out) {
 			logs::error("Write to {} failed", kPath.string());
 			return;
