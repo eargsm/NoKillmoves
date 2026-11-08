@@ -127,8 +127,12 @@ void KillCams::Update()
 	}
 
 	const auto attack = g_lastAttack.load();
-	const bool off = g_iniValue || (attack == Source::kMagic && Settings::disableMagicKillCam) ||
-	                 (attack == Source::kBow && Settings::disableBowKillCam);
+	bool       off = g_iniValue;
+	if (attack == Source::kMagic) {
+		off = Settings::disableMagicKillCam;
+	} else if (attack == Source::kBow) {
+		off = Settings::disableBowKillCam;
+	}
 	if (g_vatsDisable->data.b != off) {
 		g_vatsDisable->data.b = off;
 		logs::info("Kill cams {} (last attack: {})", off ? "off" : "on", Name(attack));
