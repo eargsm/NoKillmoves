@@ -6,6 +6,7 @@ namespace
 	enum class Source
 	{
 		kOther,
+		kMelee,
 		kMagic,
 		kBow
 	};
@@ -21,27 +22,29 @@ namespace
 			return "magic";
 		case Source::kBow:
 			return "bow";
+		case Source::kMelee:
+			return "melee";
 		default:
 			return "other";
 		}
 	}
 
-	Source FromForm(RE::TESForm* a_form)
+	Source FromForm(RE::TESForm* a_form, Source a_fallback)
 	{
 		if (!a_form) {
-			return Source::kOther;
+			return a_fallback;
 		}
 		if (a_form->IsMagicItem()) {
 			return Source::kMagic;
 		}
 		const auto weapon = a_form->As<RE::TESObjectWEAP>();
 		if (!weapon) {
-			return Source::kOther;
+			return a_fallback;
 		}
 		if (weapon->IsBow() || weapon->IsCrossbow()) {
 			return Source::kBow;
 		}
-		return weapon->IsStaff() ? Source::kMagic : Source::kOther;
+		return weapon->IsStaff() ? Source::kMagic : Source::kMelee;
 	}
 
 	std::optional<Source> AttackSource(const SKSE::ActionEvent& a_event)
@@ -55,8 +58,9 @@ namespace
 		case Type::kBowRelease:
 			return Source::kBow;
 		case Type::kWeaponSwing:
+			return FromForm(a_event.sourceForm, Source::kMelee);
 		case Type::kVoiceFire:
-			return FromForm(a_event.sourceForm);
+			return FromForm(a_event.sourceForm, Source::kOther);
 		default:
 			return std::nullopt;
 		}
@@ -129,6 +133,8 @@ void KillCams::Update()
 		off = Settings::disableMagicKillCam;
 	} else if (attack == Source::kBow) {
 		off = Settings::disableBowKillCam;
+	} else if (attack == Source::kMelee) {
+		off = Settings::disableKillMoveCam;
 	}
 	if (g_vatsDisable->data.b != off) {
 		g_vatsDisable->data.b = off;

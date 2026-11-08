@@ -9,12 +9,13 @@ namespace
 		const char*        help;
 	};
 
-	const std::array<Entry, 5> kEntries{ {
+	const std::array<Entry, 6> kEntries{ {
 		{ "bDisablePlayerThirdPerson", Settings::disablePlayerThirdPerson,
 			"Your kill moves while in third person. Sneak kills (throat slit) always stay on." },
 		{ "bDisablePlayerFirstPerson", Settings::disablePlayerFirstPerson,
 			"Your kill moves while in first person. Sneak kills (throat slit) always stay on." },
 		{ "bDisableNPC", Settings::disableNPC, "Kill moves by NPCs, creatures and dragons - on you and on each other." },
+		{ "bDisableKillMoveCam", Settings::disableKillMoveCam, "The camera during your melee kill moves. The kill move itself still plays." },
 		{ "bDisableMagicKillCam", Settings::disableMagicKillCam, "The slow-motion kill cam when your spell kills the last enemy." },
 		{ "bDisableBowKillCam", Settings::disableBowKillCam, "The slow-motion kill cam that follows your arrow or bolt." },
 	} };

@@ -7,15 +7,6 @@
 
 namespace
 {
-	void HelpMarker(const char* a_text)
-	{
-		ImGuiMCP::SameLine();
-		ImGuiMCP::TextDisabled("(?)");
-		if (ImGuiMCP::IsItemHovered()) {
-			ImGuiMCP::SetTooltip("%s", a_text);
-		}
-	}
-
 	bool SettingCheckbox(const char* a_label, std::atomic<bool>& a_value, const char* a_help)
 	{
 		bool       v = a_value.load();
@@ -24,28 +15,34 @@ namespace
 			a_value = v;
 			Settings::Save();
 		}
-		HelpMarker(a_help);
+		ImGuiMCP::Indent();
+		ImGuiMCP::TextColored({ 1.0f, 0.85f, 0.35f, 1.0f }, "%s", a_help);
+		ImGuiMCP::Unindent();
 		return changed;
 	}
 
 	void __stdcall RenderSettings()
 	{
-		ImGuiMCP::SeparatorText("NoKillmoves");
+		ImGuiMCP::SeparatorText("Kill moves");
 
 		SettingCheckbox("Disable player kill moves - third person", Settings::disablePlayerThirdPerson,
-			"Your kill moves while the camera is in third person.\nSneak kills (throat slit) always stay on.");
+			"Your kill moves in third person. Sneak kills stay on.");
 		SettingCheckbox("Disable player kill moves - first person", Settings::disablePlayerFirstPerson,
-			"Your kill moves while the camera is in first person.\nSneak kills (throat slit) always stay on.");
+			"Your kill moves in first person. Sneak kills stay on.");
 		SettingCheckbox("Disable NPC kill moves", Settings::disableNPC,
-			"Kill moves by NPCs, creatures and dragons - on you and on each other.");
+			"Kill moves by NPCs, creatures and dragons.");
+		const bool killMoveCamChanged = SettingCheckbox("Disable kill move camera", Settings::disableKillMoveCam,
+			"The camera during your melee kill moves. The kill move still plays.");
 
 		ImGuiMCP::Spacing();
-		const bool magicChanged = SettingCheckbox("Disable magic kill cam", Settings::disableMagicKillCam,
-			"The slow-motion kill cam when your spell kills the last enemy.");
-		const bool bowChanged = SettingCheckbox("Disable bow kill cam", Settings::disableBowKillCam,
-			"The slow-motion kill cam that follows your arrow or bolt.");
+		ImGuiMCP::SeparatorText("Kill cams");
 
-		if (magicChanged || bowChanged) {
+		const bool magicChanged = SettingCheckbox("Disable magic kill cam", Settings::disableMagicKillCam,
+			"The slow-motion when your spell kills the last enemy.");
+		const bool bowChanged = SettingCheckbox("Disable bow kill cam", Settings::disableBowKillCam,
+			"The slow-motion camera that follows your arrow.");
+
+		if (magicChanged || bowChanged || killMoveCamChanged) {
 			SKSE::GetTaskInterface()->AddTask(KillCams::Update);
 		}
 
